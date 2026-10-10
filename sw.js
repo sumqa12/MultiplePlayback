@@ -5,7 +5,7 @@
 //
 // 更新手順: アセットを変更したら CACHE_VERSION を上げる（上げないと古いファイルが配信され続ける）
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `multiple-playback-${CACHE_VERSION}`;
 
 // オフライン起動に必要なアプリシェル一式

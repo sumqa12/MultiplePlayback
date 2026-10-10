@@ -13,6 +13,9 @@ const ICON_MUTE = icon('<path d="M3 9h4l5-4v14l-5-4H3V9z"/>' +
 const ICON_FILE = icon('<path d="M12 3v10.6A3.5 3.5 0 1 0 14 17V7h4V3h-6z"/>');
 const ICON_REMOVE = icon('<path d="M6.4 5L5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"/>');
 const NO_TIME = '--:--';
+// iOS(iPadOS含む)判定。iPadOSはUAがMacintoshを名乗るためタッチ有無で見分ける
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 // 秒数を m:ss / h:mm:ss 形式に変換する
 function formatTime(seconds) {
     if (!Number.isFinite(seconds) || seconds < 0) {
@@ -54,7 +57,12 @@ class Player {
         this.element.appendChild(this.audio);
         this.fileInput = document.createElement('input');
         this.fileInput.type = 'file';
-        this.fileInput.accept = 'audio/*';
+        // iOSはaccept="audio/*"をUTIへ正しく変換できず、ファイルアプリ上で
+        // 音声ファイルがグレーアウトして選べなくなる。iOSではaccept自体を付けない
+        // （非対応ファイルを選んでもaudioのerrorイベントで弾かれる）
+        if (!IS_IOS) {
+            this.fileInput.accept = 'audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.oga,.opus,.weba';
+        }
         this.fileInput.className = 'audio-player__file-input';
         this.element.appendChild(this.fileInput);
         this.fileButton = this.createIconButton('audio-player__file', ICON_FILE, '音声ファイルを選択');
@@ -185,7 +193,8 @@ class Player {
         this.audio.addEventListener('error', () => {
             this.element.classList.remove('is-loading');
             this.element.classList.add('has-error');
-            this.titleLabel.textContent = 'この音声ファイルは再生できません';
+            // iOSではacceptで絞れないため、音声以外を選んだ場合もここに来る
+            this.titleLabel.textContent = 'このファイルは再生できません（未対応の形式です）';
         });
     }
     syncDuration() {
